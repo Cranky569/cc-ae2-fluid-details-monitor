@@ -1,0 +1,66 @@
+-- Function to format large numbers into a human-readable format
+function formatBytes(bytes)
+    if bytes >= 1000000 then
+        return string.format("%.1fM", bytes / 1000000)
+    elseif bytes >= 1000 then
+        return string.format("%.1fK", bytes / 1000)
+    else
+        return tostring(bytes)
+    end
+end
+
+-- Function to calculate free fluid storage and list individual fluids
+function getFluidStorage()
+    local fluids = {}
+    local bridge = peripheral.find("meBridge")
+    if bridge then
+        fluids = bridge.listFluid() or {}
+    end
+    return fluids
+end
+
+-- Function to remove mod ID from fluid name
+function formatFluidName(name)
+    return name:match(".+:(.+)") or name
+end
+
+-- Function to center text on the monitor
+function centerText(monitor, text, line)
+    local w, _ = monitor.getSize()
+    local x = math.floor((w - #text) / 2)
+    monitor.setCursorPos(x, line)
+    monitor.write(text)
+end
+
+-- Main program
+function updateDisplay()
+    local monitor = peripheral.find("monitor")
+    if not monitor then
+        print("No monitor found.")
+        return
+    end
+
+    monitor.setTextScale(1)
+    monitor.clear()
+
+    while true do
+        monitor.clear()
+
+        -- Display individual fluids
+        local fluids = getFluidStorage()
+        local line = 1
+        for _, fluid in ipairs(fluids) do
+            local name = formatFluidName(fluid.name or "Unknown")
+            local amount = (fluid.amount or 0) / 1000 -- Convert from millibuckets to buckets
+            monitor.setCursorPos(1, line)
+            monitor.write(string.format("%s: %.1f B", name, amount))
+            line = line + 1
+        end
+
+        -- Sleep before updating again
+        sleep(5)
+    end
+end
+
+-- Start the program
+updateDisplay()
