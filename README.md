@@ -21,15 +21,13 @@ This is a simple ComputerCraft script that displays Fluid Details on your Monito
 2. **Download the Script**:
    - Open the Advanced Computer and type the following command:
      ```
-     pastebin get hQLu7zJv ae2-storage-monitor
-     or
-     wget https://raw.githubusercontent.com/Cranky569/-ae2-storage-monitor/refs/heads/Main/ae2-storage-monitor
+     wget https://raw.githubusercontent.com/Cranky569/cc-ae2-fluid-details-monitor/refs/heads/main/ae2-fluid-monitor
      ```
 
 3. **Run the Script**:
    - Once the script is downloaded, type the following command to run it:
      ```
-     ae2-storage-monitor
+     ae2-fluid-monitor
      ```
 
 The script will now display the used bytes in your AE2 storage cells on the connected monitor.
