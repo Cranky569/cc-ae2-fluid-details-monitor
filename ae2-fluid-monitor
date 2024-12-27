@@ -1,11 +1,11 @@
 -- Function to format large numbers into a human-readable format
 function formatBytes(bytes)
-    if bytes >= 1000000 then
-        return string.format("%.1fM", bytes / 1000000)
-    elseif bytes >= 1000 then
-        return string.format("%.1fK", bytes / 1000)
+    if bytes >= 1000000000 then
+        return string.format("%.1fM", bytes / 1000000000) -- Convert from millibuckets to MegaBuckets
+    elseif bytes >= 1000000 then
+        return string.format("%.1fK", bytes / 1000000) -- Convert from millibuckets to KiloBuckets
     else
-        return tostring(bytes)
+        return string.format("%.1f", bytes / 1000) -- Convert from millibuckets to Buckets
     end
 end
 
@@ -27,7 +27,7 @@ end
 -- Function to center text on the monitor
 function centerText(monitor, text, line)
     local w, _ = monitor.getSize()
-    local x = math.floor((w - #text) / 2)
+    local x = math.floor((w - #text) / 2) + 1
     monitor.setCursorPos(x, line)
     monitor.write(text)
 end
@@ -48,12 +48,19 @@ function updateDisplay()
 
         -- Display individual fluids
         local fluids = getFluidStorage()
+
+        -- Sort fluids by amount in descending order
+        table.sort(fluids, function(a, b)
+            return (a.amount or 0) > (b.amount or 0)
+        end)
+
         local line = 1
         for _, fluid in ipairs(fluids) do
             local name = formatFluidName(fluid.name or "Unknown")
-            local amount = (fluid.amount or 0) / 1000 -- Convert from millibuckets to buckets
-            monitor.setCursorPos(1, line)
-            monitor.write(string.format("%s: %.1f B", name, amount))
+            local amount = fluid.amount or 0 -- Amount remains in millibuckets
+            local formattedAmount = formatBytes(amount) -- Format in millibuckets for readability
+            local displayText = string.format("%s: %s B", name, formattedAmount)
+            centerText(monitor, displayText, line)
             line = line + 1
         end
 
