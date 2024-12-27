@@ -1,9 +1,9 @@
 # ComputerCraft Storage Monitor Code for AE2
 
-This is a simple ComputerCraft script that displays the used bytes on your Monitor from your storage cells within an AE 2 system.
+This is a simple ComputerCraft script that displays Fluid Details on your Monitor from your storage cells within an AE 2 system.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Cranky569/-ae2-storage-monitor/refs/heads/Main/Display.JPG" alt="screen">
+  <img src="https://raw.githubusercontent.com/Cranky569/cc-ae2-fluid-details-monitor/refs/heads/main/fluid%20monitor.JPG" alt="screen">
 </p>
 
 ## Requirements
