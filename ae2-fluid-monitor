@@ -9,8 +9,8 @@ local function formatBytes(bytes)
     end
 end
 
--- Strip mod ID from fluid name
-local function formatFluidName(name)
+-- Strip mod ID from chemical name
+local function formatChemicalName(name)
     return name:match(".+:(.+)") or name
 end
 
@@ -22,27 +22,19 @@ local function centerText(monitor, text, line)
     monitor.write(text)
 end
 
--- Get internal fluids from AE2
-local function getInternalFluids(bridge)
-    if bridge.listFluids then
-        local fluids = bridge.listFluids() or {}
+-- Get internal chemicals from AE2
+local function getInternalChemicals(bridge)
+    if bridge.listChemicals then
+        local chemicals = bridge.listChemicals() or {}
         -- Optional: AE2 Bytes → Millibuckets
-        for _, f in ipairs(fluids) do
-            if f.amount then
-                f.amount = math.floor(f.amount / 1000)
+        for _, c in ipairs(chemicals) do
+            if c.amount then
+                c.amount = math.floor(c.amount / 1000)
             end
         end
-        return fluids
+        return chemicals
     end
     return {}
-end
-
--- Get external fluid usage (total only)
-local function getExternalFluidUsage(bridge)
-    if bridge.getUsedExternFluidStorage then
-        return bridge.getUsedExternFluidStorage() or 0
-    end
-    return 0
 end
 
 -- Main display loop
@@ -64,24 +56,15 @@ local function updateDisplay()
     while true do
         monitor.clear()
 
-        local internalFluids = getInternalFluids(bridge)
-        local externalUsed = getExternalFluidUsage(bridge)
+        local internalChemicals = getInternalChemicals(bridge)
 
-        -- Sort internal fluids by amount descending
-        table.sort(internalFluids, function(a,b) return (a.amount or 0) > (b.amount or 0) end)
+        -- Sort internal chemicals by amount descending
+        table.sort(internalChemicals, function(a,b) return (a.amount or 0) > (b.amount or 0) end)
 
-        -- Start displaying at line 1
+        -- Display internal chemicals starting at line 1
         local line = 1
-
-        -- Display internal fluids
-        for _, f in ipairs(internalFluids) do
-            centerText(monitor, string.format("%s: %s B", formatFluidName(f.name), formatBytes(f.amount or 0)), line)
-            line = line + 1
-        end
-
-        -- Display external fluids summary (optional)
-        if externalUsed > 0 then
-            centerText(monitor, string.format("External Used: %s B", formatBytes(externalUsed)), line)
+        for _, c in ipairs(internalChemicals) do
+            centerText(monitor, string.format("%s: %s B", formatChemicalName(c.name), formatBytes(c.amount or 0)), line)
             line = line + 1
         end
 
