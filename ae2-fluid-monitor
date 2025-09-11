@@ -24,8 +24,8 @@ end
 
 -- Get internal fluids from AE2
 local function getInternalFluids(bridge)
-    if bridge.getFluids then
-        local fluids = bridge.getFluids() or {}
+    if bridge.listFluids then
+        local fluids = bridge.listFluids() or {}
         -- Optional: AE2 Bytes → Millibuckets
         for _, f in ipairs(fluids) do
             if f.amount then
