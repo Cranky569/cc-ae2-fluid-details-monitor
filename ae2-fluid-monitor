@@ -22,19 +22,27 @@ local function centerText(monitor, text, line)
     monitor.write(text)
 end
 
--- Get internal fluids from AE2 cells
+-- Get internal fluids from AE2
 local function getInternalFluids(bridge)
     if bridge.getFluids then
         local fluids = bridge.getFluids() or {}
-        -- Konvertiere AE2 Bytes in Millibuckets für Anzeige (optional)
+        -- Optional: AE2 Bytes → Millibuckets
         for _, f in ipairs(fluids) do
             if f.amount then
-                f.amount = math.floor(f.amount / 1000) -- AE2 speichert in Bytes
+                f.amount = math.floor(f.amount / 1000)
             end
         end
         return fluids
     end
     return {}
+end
+
+-- Get external fluid usage (total only)
+local function getExternalFluidUsage(bridge)
+    if bridge.getUsedExternFluidStorage then
+        return bridge.getUsedExternFluidStorage() or 0
+    end
+    return 0
 end
 
 -- Main display loop
@@ -57,14 +65,23 @@ local function updateDisplay()
         monitor.clear()
 
         local internalFluids = getInternalFluids(bridge)
+        local externalUsed = getExternalFluidUsage(bridge)
 
-        -- Sort by amount descending
-        table.sort(internalFluids, function(a, b) return (a.amount or 0) > (b.amount or 0) end)
+        -- Sort internal fluids by amount descending
+        table.sort(internalFluids, function(a,b) return (a.amount or 0) > (b.amount or 0) end)
 
-        -- Display starting at line 1
+        -- Start displaying at line 1
         local line = 1
+
+        -- Display internal fluids
         for _, f in ipairs(internalFluids) do
             centerText(monitor, string.format("%s: %s B", formatFluidName(f.name), formatBytes(f.amount or 0)), line)
+            line = line + 1
+        end
+
+        -- Display external fluids summary (optional)
+        if externalUsed > 0 then
+            centerText(monitor, string.format("External Used: %s B", formatBytes(externalUsed)), line)
             line = line + 1
         end
 
