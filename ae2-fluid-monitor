@@ -1,3 +1,4 @@
+-- Function to format large numbers into a human-readable format
 local function formatBytes(bytes)
     if bytes >= 1000000000 then
         return string.format("%.1fM", bytes / 1000000000)
@@ -8,10 +9,12 @@ local function formatBytes(bytes)
     end
 end
 
+-- Remove mod ID from fluid name
 local function formatFluidName(name)
     return name:match(".+:(.+)") or name
 end
 
+-- Center text on monitor
 local function centerText(monitor, text, line)
     local w, _ = monitor.getSize()
     local x = math.floor((w - #text) / 2) + 1
@@ -19,46 +22,64 @@ local function centerText(monitor, text, line)
     monitor.write(text)
 end
 
--- Function to get fluids and storage info
+-- Get fluids and storage info
 local function getFluidStorageInfo()
     local bridge = peripheral.find("me_bridge")
     if not bridge then return {}, 0, 0, 0 end
 
-    local fluids = bridge.listFluid and bridge.listFluid() or {}
-    local total = bridge.getTotalFluidStorage and bridge.getTotalFluidStorage() or 0
-    local used = 0
+    -- Get all fluids (internal + external)
+    local fluids, err = bridge.getFluids and bridge.getFluids() or {}
+    if not fluids then fluids = {} end
+
+    -- Internal storage
+    local totalInternal = bridge.getTotalFluidStorage and bridge.getTotalFluidStorage() or 0
+    local usedInternal = 0
     for _, f in ipairs(fluids) do
-        used = used + (f.amount or 0)
+        usedInternal = usedInternal + (f.amount or 0)
     end
 
-    if bridge.getUsedExternFluidStorage then
-        used = used + (bridge.getUsedExternFluidStorage() or 0)
-    end
+    -- External storage
+    local usedExternal = bridge.getUsedExternFluidStorage and bridge.getUsedExternFluidStorage() or 0
+    local totalExternal = bridge.getTotalExternFluidStorage and bridge.getTotalExternFluidStorage() or 0
 
-    local free = total - used
-    return fluids, total, used, free
+    local usedTotal = usedInternal + usedExternal
+    local totalCapacity = totalInternal + totalExternal
+    local freeTotal = totalCapacity - usedTotal
+
+    return fluids, totalCapacity, usedTotal, freeTotal
 end
 
--- Main display function
+-- Main display loop
 local function updateDisplay()
     local monitor = peripheral.find("monitor")
-    if not monitor then print("No monitor found.") return end
+    if not monitor then
+        print("No monitor found.")
+        return
+    end
 
     monitor.setTextScale(1)
     monitor.clear()
 
     while true do
         monitor.clear()
+
         local fluids, total, used, free = getFluidStorageInfo()
 
+        -- Display storage summary
         centerText(monitor, string.format("Used: %s B / Free: %s B", formatBytes(used), formatBytes(free)), 1)
         centerText(monitor, string.format("Total: %s B", formatBytes(total)), 2)
 
-        table.sort(fluids, function(a,b) return (a.amount or 0) > (b.amount or 0) end)
+        -- Sort fluids by amount descending
+        table.sort(fluids, function(a, b)
+            return (a.amount or 0) > (b.amount or 0)
+        end)
 
+        -- Display fluids
         local line = 4
         for _, f in ipairs(fluids) do
-            centerText(monitor, string.format("%s: %s B", formatFluidName(f.name), formatBytes(f.amount or 0)), line)
+            local name = formatFluidName(f.name or "Unknown")
+            local amount = f.amount or 0
+            centerText(monitor, string.format("%s: %s B", name, formatBytes(amount)), line)
             line = line + 1
         end
 
@@ -66,4 +87,5 @@ local function updateDisplay()
     end
 end
 
+-- Start program
 updateDisplay()
