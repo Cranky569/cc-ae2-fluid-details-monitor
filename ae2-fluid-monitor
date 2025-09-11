@@ -22,10 +22,16 @@ local function centerText(monitor, text, line)
     monitor.write(text)
 end
 
--- Get internal fluids
+-- Get internal fluids from AE2 cells
 local function getInternalFluids(bridge)
     if bridge.getFluids then
         local fluids = bridge.getFluids() or {}
+        -- Konvertiere AE2 Bytes in Millibuckets für Anzeige (optional)
+        for _, f in ipairs(fluids) do
+            if f.amount then
+                f.amount = math.floor(f.amount / 1000) -- AE2 speichert in Bytes
+            end
+        end
         return fluids
     end
     return {}
@@ -50,13 +56,12 @@ local function updateDisplay()
     while true do
         monitor.clear()
 
-        -- Get internal fluids
         local internalFluids = getInternalFluids(bridge)
 
-        -- Sort internal fluids by amount descending
-        table.sort(internalFluids, function(a,b) return (a.amount or 0) > (b.amount or 0) end)
+        -- Sort by amount descending
+        table.sort(internalFluids, function(a, b) return (a.amount or 0) > (b.amount or 0) end)
 
-        -- Display internal fluids starting from line 1
+        -- Display starting at line 1
         local line = 1
         for _, f in ipairs(internalFluids) do
             centerText(monitor, string.format("%s: %s B", formatFluidName(f.name), formatBytes(f.amount or 0)), line)
