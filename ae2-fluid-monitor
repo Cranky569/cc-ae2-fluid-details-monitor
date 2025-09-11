@@ -1,52 +1,42 @@
--- Format bytes to human-readable
-local function formatBytes(bytes)
+-- Function to format large numbers into a human-readable format
+function formatBytes(bytes)
     if bytes >= 1000000000 then
-        return string.format("%.1fM", bytes / 1000000000)
+        return string.format("%.1fM", bytes / 1000000000) -- MegaBuckets
     elseif bytes >= 1000000 then
-        return string.format("%.1fK", bytes / 1000000)
+        return string.format("%.1fK", bytes / 1000000) -- KiloBuckets
     else
-        return string.format("%.1f", bytes / 1000)
+        return string.format("%.1f", bytes / 1000) -- Buckets
     end
 end
 
--- Strip mod ID from chemical name
-local function formatChemicalName(name)
+-- Function to get chemicals from ME Bridge
+function getChemicals()
+    local chemicals = {}
+    local bridge = peripheral.find("me_bridge")
+    if bridge and bridge.listChemicals then
+        chemicals = bridge.listChemicals() or {}
+    end
+    return chemicals
+end
+
+-- Function to remove mod ID from chemical name
+function formatChemicalName(name)
     return name:match(".+:(.+)") or name
 end
 
--- Center text on monitor
-local function centerText(monitor, text, line)
+-- Function to center text on the monitor
+function centerText(monitor, text, line)
     local w, _ = monitor.getSize()
     local x = math.floor((w - #text) / 2) + 1
     monitor.setCursorPos(x, line)
     monitor.write(text)
 end
 
--- Get internal chemicals from AE2
-local function getInternalChemicals(bridge)
-    if bridge.listChemicals then
-        local chemicals = bridge.listChemicals() or {}
-        -- Optional: AE2 Bytes → Millibuckets
-        for _, c in ipairs(chemicals) do
-            if c.amount then
-                c.amount = math.floor(c.amount / 1000)
-            end
-        end
-        return chemicals
-    end
-    return {}
-end
-
--- Main display loop
-local function updateDisplay()
+-- Main program
+function updateDisplay()
     local monitor = peripheral.find("monitor")
-    local bridge = peripheral.find("me_bridge")
     if not monitor then
         print("No monitor found.")
-        return
-    end
-    if not bridge then
-        print("No ME Bridge found.")
         return
     end
 
@@ -56,20 +46,28 @@ local function updateDisplay()
     while true do
         monitor.clear()
 
-        local internalChemicals = getInternalChemicals(bridge)
+        -- Display individual chemicals
+        local chemicals = getChemicals()
 
-        -- Sort internal chemicals by amount descending
-        table.sort(internalChemicals, function(a,b) return (a.amount or 0) > (b.amount or 0) end)
+        -- Sort chemicals by amount in descending order
+        table.sort(chemicals, function(a, b)
+            return (a.amount or 0) > (b.amount or 0)
+        end)
 
-        -- Display internal chemicals starting at line 1
         local line = 1
-        for _, c in ipairs(internalChemicals) do
-            centerText(monitor, string.format("%s: %s B", formatChemicalName(c.name), formatBytes(c.amount or 0)), line)
+        for _, chem in ipairs(chemicals) do
+            local name = formatChemicalName(chem.name or "Unknown")
+            local amount = chem.amount or 0
+            local formattedAmount = formatBytes(amount)
+            local displayText = string.format("%s: %s B", name, formattedAmount)
+            centerText(monitor, displayText, line)
             line = line + 1
         end
 
+        -- Sleep before updating again
         sleep(5)
     end
 end
 
+-- Start the program
 updateDisplay()
