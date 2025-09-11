@@ -52,30 +52,12 @@ local function updateDisplay()
 
         -- Get internal fluids
         local internalFluids = getInternalFluids(bridge)
-        local totalInternal = bridge.getTotalFluidStorage and bridge.getTotalFluidStorage() or 0
-        local usedInternal = 0
-        for _, f in ipairs(internalFluids) do
-            usedInternal = usedInternal + (f.amount or 0)
-        end
-
-        -- External fluid usage
-        local usedExternal = bridge.getUsedExternFluidStorage and bridge.getUsedExternFluidStorage() or 0
-        local totalExternal = bridge.getTotalExternFluidStorage and bridge.getTotalExternFluidStorage() or 0
-
-        local totalUsed = usedInternal + usedExternal
-        local totalCapacity = totalInternal + totalExternal
-        local freeTotal = totalCapacity - totalUsed
-
-        -- Display totals
-        centerText(monitor, string.format("Used: %s B / Free: %s B", formatBytes(totalUsed), formatBytes(freeTotal)), 1)
-        centerText(monitor, string.format("Total: %s B (Internal+External)", formatBytes(totalCapacity)), 2)
-        centerText(monitor, string.format("External Used: %s B", formatBytes(usedExternal)), 3)
 
         -- Sort internal fluids by amount descending
         table.sort(internalFluids, function(a,b) return (a.amount or 0) > (b.amount or 0) end)
 
-        -- Display internal fluids
-        local line = 5
+        -- Display internal fluids starting from line 1
+        local line = 1
         for _, f in ipairs(internalFluids) do
             centerText(monitor, string.format("%s: %s B", formatFluidName(f.name), formatBytes(f.amount or 0)), line)
             line = line + 1
