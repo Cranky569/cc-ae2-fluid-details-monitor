@@ -1,21 +1,18 @@
--- Function to format large numbers into a human-readable format
-function formatBytes(bytes)
+local function formatBytes(bytes)
     if bytes >= 1000000000 then
-        return string.format("%.1fM", bytes / 1000000000) -- MegaBuckets
+        return string.format("%.1fM", bytes / 1000000000)
     elseif bytes >= 1000000 then
-        return string.format("%.1fK", bytes / 1000000)   -- KiloBuckets
+        return string.format("%.1fK", bytes / 1000000)
     else
-        return string.format("%.1f", bytes / 1000)       -- Buckets
+        return string.format("%.1f", bytes / 1000)
     end
 end
 
--- Function to remove mod ID from fluid name
-function formatFluidName(name)
+local function formatFluidName(name)
     return name:match(".+:(.+)") or name
 end
 
--- Function to center text on the monitor
-function centerText(monitor, text, line)
+local function centerText(monitor, text, line)
     local w, _ = monitor.getSize()
     local x = math.floor((w - #text) / 2) + 1
     monitor.setCursorPos(x, line)
@@ -23,75 +20,50 @@ function centerText(monitor, text, line)
 end
 
 -- Function to get fluids and storage info
-function getFluidStorageInfo()
+local function getFluidStorageInfo()
     local bridge = peripheral.find("me_bridge")
     if not bridge then return {}, 0, 0, 0 end
 
-    -- Determine which method is available
-    local listMethod = bridge.listFluids or bridge.listFluid or bridge.getFluids
-    local fluids = {}
-    if listMethod then
-        fluids = listMethod(bridge) or {}
+    local fluids = bridge.listFluid and bridge.listFluid() or {}
+    local total = bridge.getTotalFluidStorage and bridge.getTotalFluidStorage() or 0
+    local used = 0
+    for _, f in ipairs(fluids) do
+        used = used + (f.amount or 0)
     end
 
-    -- Total storage
-    local totalStorage = bridge.getTotalFluidStorage and bridge.getTotalFluidStorage() or 0
-
-    -- Calculate used storage (fluids in controller)
-    local usedStorage = 0
-    for _, fluid in ipairs(fluids) do
-        usedStorage = usedStorage + (fluid.amount or 0)
-    end
-
-    -- Include external fluid storage if available
     if bridge.getUsedExternFluidStorage then
-        usedStorage = usedStorage + (bridge.getUsedExternFluidStorage() or 0)
+        used = used + (bridge.getUsedExternFluidStorage() or 0)
     end
 
-    local freeStorage = totalStorage - usedStorage
-    return fluids, totalStorage, usedStorage, freeStorage
+    local free = total - used
+    return fluids, total, used, free
 end
 
--- Main program
-function updateDisplay()
+-- Main display function
+local function updateDisplay()
     local monitor = peripheral.find("monitor")
-    if not monitor then
-        print("No monitor found.")
-        return
-    end
+    if not monitor then print("No monitor found.") return end
 
     monitor.setTextScale(1)
     monitor.clear()
 
     while true do
         monitor.clear()
-
         local fluids, total, used, free = getFluidStorageInfo()
 
-        -- Display total used/free storage
         centerText(monitor, string.format("Used: %s B / Free: %s B", formatBytes(used), formatBytes(free)), 1)
         centerText(monitor, string.format("Total: %s B", formatBytes(total)), 2)
 
-        -- Sort and display fluids if any are available
-        if #fluids > 0 then
-            table.sort(fluids, function(a, b)
-                return (a.amount or 0) > (b.amount or 0)
-            end)
+        table.sort(fluids, function(a,b) return (a.amount or 0) > (b.amount or 0) end)
 
-            local line = 4
-            for _, fluid in ipairs(fluids) do
-                local name = formatFluidName(fluid.name or "Unknown")
-                local amount = fluid.amount or 0
-                centerText(monitor, string.format("%s: %s B", name, formatBytes(amount)), line)
-                line = line + 1
-            end
-        else
-            centerText(monitor, "No fluid listing available", 4)
+        local line = 4
+        for _, f in ipairs(fluids) do
+            centerText(monitor, string.format("%s: %s B", formatFluidName(f.name), formatBytes(f.amount or 0)), line)
+            line = line + 1
         end
 
         sleep(5)
     end
 end
 
--- Start the program
 updateDisplay()
