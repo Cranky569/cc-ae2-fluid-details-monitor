@@ -1,22 +1,12 @@
 -- Function to format large numbers into a human-readable format
 function formatBytes(bytes)
     if bytes >= 1000000000 then
-        return string.format("%.1fM", bytes / 1000000000) -- Convert from millibuckets to MegaBuckets
+        return string.format("%.1fM", bytes / 1000000000) -- MegaBuckets
     elseif bytes >= 1000000 then
-        return string.format("%.1fK", bytes / 1000000) -- Convert from millibuckets to KiloBuckets
+        return string.format("%.1fK", bytes / 1000000)   -- KiloBuckets
     else
-        return string.format("%.1f", bytes / 1000) -- Convert from millibuckets to Buckets
+        return string.format("%.1f", bytes / 1000)       -- Buckets
     end
-end
-
--- Function to calculate free fluid storage and list individual fluids
-function getFluidStorage()
-    local fluids = {}
-    local bridge = peripheral.find("me_bridge")
-    if bridge then
-        fluids = bridge.listFluids() or {}
-    end
-    return fluids
 end
 
 -- Function to remove mod ID from fluid name
@@ -30,6 +20,27 @@ function centerText(monitor, text, line)
     local x = math.floor((w - #text) / 2) + 1
     monitor.setCursorPos(x, line)
     monitor.write(text)
+end
+
+-- Function to get fluids and storage info
+function getFluidStorageInfo()
+    local bridge = peripheral.find("me_bridge")
+    if not bridge then return {}, 0, 0, 0 end
+
+    local fluids = bridge.listFluids() or {}
+    local totalStorage = bridge.getTotalFluidStorage() or 0
+    local usedStorage = 0
+
+    for _, fluid in ipairs(fluids) do
+        usedStorage = usedStorage + (fluid.amount or 0)
+    end
+
+    -- Include external fluid storage
+    local externalUsed = bridge.getUsedExternFluidStorage() or 0
+    usedStorage = usedStorage + externalUsed
+
+    local freeStorage = totalStorage - usedStorage
+    return fluids, totalStorage, usedStorage, freeStorage
 end
 
 -- Main program
@@ -46,25 +57,28 @@ function updateDisplay()
     while true do
         monitor.clear()
 
-        -- Display individual fluids
-        local fluids = getFluidStorage()
+        -- Get fluids and storage info
+        local fluids, total, used, free = getFluidStorageInfo()
+
+        -- Display total used/free storage at the top
+        centerText(monitor, string.format("Used: %s B / Free: %s B", formatBytes(used), formatBytes(free)), 1)
+        centerText(monitor, string.format("Total: %s B", formatBytes(total)), 2)
 
         -- Sort fluids by amount in descending order
         table.sort(fluids, function(a, b)
             return (a.amount or 0) > (b.amount or 0)
         end)
 
-        local line = 1
+        -- Display individual fluids starting from line 4
+        local line = 4
         for _, fluid in ipairs(fluids) do
             local name = formatFluidName(fluid.name or "Unknown")
-            local amount = fluid.amount or 0 -- Amount remains in millibuckets
-            local formattedAmount = formatBytes(amount) -- Format in millibuckets for readability
-            local displayText = string.format("%s: %s B", name, formattedAmount)
+            local amount = fluid.amount or 0
+            local displayText = string.format("%s: %s B", name, formatBytes(amount))
             centerText(monitor, displayText, line)
             line = line + 1
         end
 
-        -- Sleep before updating again
         sleep(5)
     end
 end
