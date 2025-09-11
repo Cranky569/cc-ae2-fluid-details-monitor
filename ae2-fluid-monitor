@@ -14,7 +14,7 @@ function getFluidStorage()
     local fluids = {}
     local bridge = peripheral.find("me_bridge")
     if bridge then
-        fluids = bridge.listFluid() or {}
+        fluids = bridge.listFluids() or {}
     end
     return fluids
 end
