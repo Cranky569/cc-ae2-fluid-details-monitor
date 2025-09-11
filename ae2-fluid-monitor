@@ -22,21 +22,28 @@ function centerText(monitor, text, line)
     monitor.write(text)
 end
 
--- Function to get fluids and storage info
+-- Function to get fluids and storage info (supports both listFluid and listFluids)
 function getFluidStorageInfo()
     local bridge = peripheral.find("me_bridge")
     if not bridge then return {}, 0, 0, 0 end
 
-    local fluids = bridge.listFluids() or {}
-    local totalStorage = bridge.getTotalFluidStorage() or 0
+    -- Determine which method is available
+    local listMethod = bridge.listFluids or bridge.listFluid
+    if not listMethod then
+        print("Bridge does not support listFluids or listFluid.")
+        return {}, 0, 0, 0
+    end
+
+    local fluids = listMethod(bridge) or {}
+    local totalStorage = bridge.getTotalFluidStorage and bridge.getTotalFluidStorage() or 0
     local usedStorage = 0
 
     for _, fluid in ipairs(fluids) do
         usedStorage = usedStorage + (fluid.amount or 0)
     end
 
-    -- Include external fluid storage
-    local externalUsed = bridge.getUsedExternFluidStorage() or 0
+    -- Include external fluid storage if available
+    local externalUsed = bridge.getUsedExternFluidStorage and bridge.getUsedExternFluidStorage() or 0
     usedStorage = usedStorage + externalUsed
 
     local freeStorage = totalStorage - usedStorage
