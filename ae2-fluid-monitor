@@ -1,36 +1,29 @@
--- ME Bridge finden
-local meBridge = peripheral.find("me_bridge")
-if not meBridge then
-  print("Kein ME Bridge gefunden!")
-  return
-end
+local bridge = peripheral.find("me_bridge")
+local monitor = peripheral.find("monitor")
 
--- Funktion, um alle Flüssigkeiten abzurufen
-function getFluidStorage()
-  local fluidList = {}
-  
-  -- Prüfen, ob die Methode existiert
-  if meBridge.getFluids then
-    local fluids = meBridge.getFluids()
-    for _, fluid in pairs(fluids) do
-      table.insert(fluidList, {
-        name = fluid.displayName or fluid.name,
-        amount = fluid.amount
-      })
+if not bridge then error("Kein ME-Bridge gefunden!") end
+if not monitor then error("Kein Monitor gefunden!") end
+
+local function displayFluids()
+    monitor.clear()
+    monitor.setCursorPos(1,1)
+    monitor.write("Fluid Monitor")
+
+    local fluids = bridge.getFluids() -- Hol alle Flüssigkeiten
+    if #fluids == 0 then
+        monitor.setCursorPos(1,2)
+        monitor.write("Keine Flüssigkeiten gefunden.")
+    else
+        local line = 2
+        for _, f in ipairs(fluids) do
+            monitor.setCursorPos(1,line)
+            monitor.write(string.format("%s: %.2f mB", f.name, f.amount))
+            line = line + 1
+        end
     end
-  else
-    print("Deine ME Bridge unterstützt keine getFluids()-Methode.")
-  end
-
-  return fluidList
 end
 
--- Flüssigkeiten abrufen und ausgeben
-local fluids = getFluidStorage()
-if #fluids == 0 then
-  print("Keine Flüssigkeiten gefunden.")
-else
-  for _, f in ipairs(fluids) do
-    print(string.format("Flüssigkeit: %s | Menge: %.2f mB", f.name, f.amount))
-  end
+while true do
+    displayFluids()
+    sleep(5)
 end
