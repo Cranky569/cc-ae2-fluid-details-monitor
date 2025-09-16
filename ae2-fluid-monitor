@@ -19,7 +19,16 @@ local function displayFluids()
         local line = 2
         for _, f in ipairs(fluids) do
             local shortName = f.name:gsub(".*:", "")
-            local bytes = used[f.name] or 0
+            local bytes = 0
+
+            -- Suche den passenden Eintrag in 'used'
+            for key, value in pairs(used) do
+                if key == f.name then
+                    bytes = value
+                    break
+                end
+            end
+
             monitor.setCursorPos(1,line)
             monitor.write(string.format("%s: %d Bytes", shortName, bytes))
             line = line + 1
