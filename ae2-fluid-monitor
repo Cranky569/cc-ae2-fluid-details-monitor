@@ -26,21 +26,23 @@ function displayFluids()
         return
     end
 
-    local fluids, err = bridge.listFluids()
-    if err then
-        print("Fehler beim Abrufen der Flüssigkeiten: " .. err)
+    local items = bridge.listItems()
+    if not items then
+        print("Fehler beim Abrufen der Items.")
         return
     end
 
     local line = 1
-    for _, fluid in ipairs(fluids) do
-        local name = fluid.name or "Unbekannt"
-        local amount = fluid.amount or 0
-        local formattedAmount = formatFluidAmount(amount)
-        local displayText = string.format("%s: %s", name, formattedAmount)
-        monitor.setCursorPos(1, line)
-        monitor.write(displayText)
-        line = line + 1
+    for _, item in ipairs(items) do
+        if item.isFluid then
+            local name = item.name or "Unbekannt"
+            local amount = item.amount or 0
+            local formattedAmount = formatFluidAmount(amount)
+            local displayText = string.format("%s: %s", name, formattedAmount)
+            monitor.setCursorPos(1, line)
+            monitor.write(displayText)
+            line = line + 1
+        end
     end
 end
 
