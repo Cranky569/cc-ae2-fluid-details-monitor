@@ -7,19 +7,21 @@ if not monitor then error("Kein Monitor gefunden!") end
 local function displayFluids()
     monitor.clear()
     monitor.setCursorPos(1,1)
-    monitor.write("Fluid Monitor")
+    monitor.write("Fluid Monitor (Bytes)")
 
-    local fluids = bridge.getFluids() -- Hol alle Flüssigkeiten
+    local fluids = bridge.getFluids()
+    local used = bridge.getUsedFluidStorage() -- Speichernutzung in Bytes
+
     if #fluids == 0 then
         monitor.setCursorPos(1,2)
         monitor.write("Keine Flüssigkeiten gefunden.")
     else
         local line = 2
         for _, f in ipairs(fluids) do
-            -- Entferne den Mod-Namen vor dem Doppelpunkt
             local shortName = f.name:gsub(".*:", "")
+            local bytes = used[f.name] or 0
             monitor.setCursorPos(1,line)
-            monitor.write(string.format("%s: %d mB", shortName, tonumber(f.amount) or 0))
+            monitor.write(string.format("%s: %d Bytes", shortName, bytes))
             line = line + 1
         end
     end
