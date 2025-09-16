@@ -1,50 +1,18 @@
--- Funktion zur Formatierung der Flüssigkeitsmenge
-function formatFluidAmount(amount)
-    if amount >= 1e6 then
-        return string.format("%.1f M", amount / 1e6)  -- Millionen
-    elseif amount >= 1e3 then
-        return string.format("%.1f K", amount / 1e3)  -- Tausend
-    else
-        return string.format("%.1f", amount)  -- Einzelne Einheiten
-    end
+-- ME Bridge finden
+local meBridge = peripheral.find("me_bridge")
+if not meBridge then
+  print("Kein ME Bridge gefunden!")
+  return
 end
 
--- Funktion zur Anzeige der Flüssigkeiten auf dem Monitor
-function displayFluids()
-    local monitor = peripheral.find("monitor")
-    if not monitor then
-        print("Kein Monitor gefunden.")
-        return
-    end
-
-    monitor.setTextScale(1)
-    monitor.clear()
-
-    local bridge = peripheral.find("me_bridge")
-    if not bridge then
-        print("Keine ME Bridge gefunden.")
-        return
-    end
-
-    local items = bridge.listItems()
-    if not items then
-        print("Fehler beim Abrufen der Items.")
-        return
-    end
-
-    local line = 1
-    for _, item in ipairs(items) do
-        if item.isFluid then
-            local name = item.name or "Unbekannt"
-            local amount = item.amount or 0
-            local formattedAmount = formatFluidAmount(amount)
-            local displayText = string.format("%s: %s", name, formattedAmount)
-            monitor.setCursorPos(1, line)
-            monitor.write(displayText)
-            line = line + 1
-        end
-    end
+-- Alle Flüssigkeiten im ME-System auflisten
+local fluids = meBridge.listFluids()
+if not fluids or #fluids == 0 then
+  print("Keine Flüssigkeiten im ME-System gefunden.")
+  return
 end
 
--- Hauptprogramm
-displayFluids()
+-- Flüssigkeiten anzeigen
+for _, fluid in ipairs(fluids) do
+  print(string.format("Flüssigkeit: %s | Menge: %.2f mB", fluid.displayName, fluid.amount))
+end
