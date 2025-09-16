@@ -5,14 +5,32 @@ if not meBridge then
   return
 end
 
--- Alle Flüssigkeiten im ME-System auflisten
-local fluids = meBridge.listFluids()
-if not fluids or #fluids == 0 then
-  print("Keine Flüssigkeiten im ME-System gefunden.")
-  return
+-- Funktion, um alle Flüssigkeiten abzurufen
+function getFluidStorage()
+  local fluidList = {}
+  
+  -- Prüfen, ob die Methode existiert
+  if meBridge.getFluids then
+    local fluids = meBridge.getFluids()
+    for _, fluid in pairs(fluids) do
+      table.insert(fluidList, {
+        name = fluid.displayName or fluid.name,
+        amount = fluid.amount
+      })
+    end
+  else
+    print("Deine ME Bridge unterstützt keine getFluids()-Methode.")
+  end
+
+  return fluidList
 end
 
--- Flüssigkeiten anzeigen
-for _, fluid in ipairs(fluids) do
-  print(string.format("Flüssigkeit: %s | Menge: %.2f mB", fluid.displayName, fluid.amount))
+-- Flüssigkeiten abrufen und ausgeben
+local fluids = getFluidStorage()
+if #fluids == 0 then
+  print("Keine Flüssigkeiten gefunden.")
+else
+  for _, f in ipairs(fluids) do
+    print(string.format("Flüssigkeit: %s | Menge: %.2f mB", f.name, f.amount))
+  end
 end
