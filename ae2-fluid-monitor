@@ -17,7 +17,7 @@ local function displayFluids()
         local line = 2
         for _, f in ipairs(fluids) do
             monitor.setCursorPos(1,line)
-            monitor.write(string.format("%s: %.2f mB", f.name, f.amount))
+            monitor.write(string.format("%s: %d mB", f.name, tonumber(f.amount) or 0))
             line = line + 1
         end
     end
