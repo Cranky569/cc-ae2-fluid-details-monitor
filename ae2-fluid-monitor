@@ -16,8 +16,10 @@ local function displayFluids()
     else
         local line = 2
         for _, f in ipairs(fluids) do
+            -- Entferne den Mod-Namen vor dem Doppelpunkt
+            local shortName = f.name:gsub(".*:", "")
             monitor.setCursorPos(1,line)
-            monitor.write(string.format("%s: %d mB", f.name, tonumber(f.amount) or 0))
+            monitor.write(string.format("%s: %d mB", shortName, tonumber(f.amount) or 0))
             line = line + 1
         end
     end
